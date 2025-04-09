@@ -1,0 +1,94 @@
+services:
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx_container
+    ports:
+      - "80:80"
+    volumes:
+      - ./swagger:/usr/share/nginx/html
+    depends_on:
+      - laravel
+      - node
+      - kibana
+    networks:
+      - app_network
+
+  laravel:
+    build:
+      context: ./laravel
+    container_name: laravel_container
+    volumes:
+      - ./laravel:/var/www/html
+    ports:
+    - "8080:80"
+    environment:
+      - APP_ENV=local
+      - APP_KEY=base64:j5xI+q2UDFjbBFv5waR4ObUyT7eiGY3L5UiHdICRMvs=
+    networks:
+      - app_network
+
+  node:
+    build:
+      context: ./node
+    container_name: node_container
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+      - elasticsearch
+      - kibana
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+    networks:
+      - app_network
+
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - app_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.3
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false  # Disable security for testing
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    networks:
+      - app_network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.5.3
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - app_network
+    depends_on:
+      - elasticsearch
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.5.3
+    container_name: logstash
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5000:5000"  # TCP input (optional)
+      - "9600:9600"  # Monitoring API
+    networks:
+      - app_network
+    depends_on:
+      - elasticsearch
+
+networks:
+  app_network:
+    driver: bridge
