@@ -22,7 +22,10 @@ app.get('/messages', async (req, res) => {
         const messages = await database.getMessages();
         res.json(messages);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch messages' });
+        res.status(500).json({
+            error: 'Failed to fetch messages',
+            message: err
+        });
     }
 });
 
@@ -31,7 +34,10 @@ app.get('/logs', async (req, res) => {
         const logs = await elasticsearch.getLogs();
         res.json(logs);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch logs' });
+        res.status(500).json({
+            error: 'Failed to fetch logs: ',
+            message: err
+        });
     }
 });
 

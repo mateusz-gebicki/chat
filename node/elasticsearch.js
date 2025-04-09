@@ -1,6 +1,6 @@
 const { Client } = require('@elastic/elasticsearch');
 
-const ES_URL = process.env.ES_URL || 'http://localhost:9200';
+const ES_URL = process.env.ES_URL || 'http://elasticsearch:9200';
 const client = new Client({ node: ES_URL });
 
 async function indexMessage(message) {
