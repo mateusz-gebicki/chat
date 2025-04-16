@@ -10,4 +10,8 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+COPY start.sh ./start.sh
+
+RUN chmod +x ./start.sh
+
+CMD ./start.sh

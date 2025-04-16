@@ -24,9 +24,9 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    const socket       = io();
+    const socket = io();
     const messagesList = document.getElementById('messages');
-    const chatForm     = document.getElementById('chatForm');
+    const chatForm = document.getElementById('chatForm');
     const messageInput = document.getElementById('messageInput');
 
     fetch('/messages')

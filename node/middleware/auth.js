@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_laravel_jwt_secret';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function verifyToken (req, res, next) {
     const authHeader = req.headers.authorization;

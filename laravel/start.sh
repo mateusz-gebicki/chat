@@ -7,7 +7,9 @@ composer install --no-interaction --prefer-dist --optimize-autoloader
 
 cp .env.example .env
 
-php artisan jwt:secret --force
+if ! grep -q "JWT_SECRET=" .env; then
+    php artisan jwt:secret
+fi
 
 if [ ! -f database/database.sqlite ]; then
     touch database/database.sqlite
