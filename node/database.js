@@ -4,13 +4,19 @@ const DB_URI  = process.env.DB_URI  || 'mongodb://mongo:27017/chatapp';
 const DB_NAME = process.env.DB_NAME || 'chatdb';
 
 let client;
+let db;
 let collection;
 
 async function connect() {
     client = new MongoClient(DB_URI);
     await client.connect();
-    const db = client.db(DB_NAME);
+    db = client.db(DB_NAME);
     collection = db.collection('messages');
+}
+
+function getDb() {
+    if (!db) throw new Error('Database not initialized');
+    return db;
 }
 
 async function saveMessage(message) {
@@ -23,4 +29,4 @@ async function getMessages() {
     return collection.find().sort({ _id: 1 }).toArray();
 }
 
-module.exports = { connect, saveMessage, getMessages };
+module.exports = { connect, getDb, saveMessage, getMessages };

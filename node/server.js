@@ -11,35 +11,29 @@ const websocket    = require('./websocket');
 const app = express();
 const server = http.createServer(app);
 
+const Message = require('./models/Message');
+
 database.connect()
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
+    .then((db) => {
+        Message.init(db);
+        console.log('Connected to MongoDB');
+    })
+    .catch(err => {
+        console.error('MongoDB connection error:', err);
+    });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/messages', async (req, res) => {
-    try {
-        const messages = await database.getMessages();
-        res.json(messages);
-    } catch (err) {
-        res.status(500).json({
-            error: 'Failed to fetch messages',
-            message: err
-        });
-    }
-});
+app.use('/api/v1/documentation', express.static(path.join(__dirname, 'docs')));
 
-app.get('/logs', async (req, res) => {
-    try {
-        const logs = await elasticsearch.getLogs();
-        res.json(logs);
-    } catch (err) {
-        res.status(500).json({
-            error: 'Failed to fetch logs: ',
-            message: err
-        });
-    }
-});
+const messagesRouter = require('./routes/messages');
+app.use('/api/v1/messages', messagesRouter);
+
+const logsRouter = require('./routes/logs');
+app.use('/api/v1/logs', logsRouter);
+
+const setupSwagger = require('./swagger');
+setupSwagger(app);
 
 kibana.init(app);
 

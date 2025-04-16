@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    public function login(Request $request) : JsonResponse
     {
         $credentials = $request->only('email', 'password');
 
@@ -21,7 +22,7 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        \Log::info('Authorization Header:', [
+        Log::info('Authorization Header:', [
             'header' => $request->header('Authorization'),
             'user' => auth()->user()
         ]);

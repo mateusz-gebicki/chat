@@ -1,43 +1,135 @@
 const express = require('express');
 const router = express.Router();
-const Message = require('../models/Message');
+const database = require('../database');
+const { ObjectId } = require('mongodb');
+const verifyToken = require('../middleware/auth');
 
-// GET - Wszystkie wiadomości
+/**
+ * @swagger
+ * /api/v1/messages:
+ *   get:
+ *     summary: Get all messages
+ *     responses:
+ *       200:
+ *         description: Messages fetched successfully
+ *       500:
+ *         description: Failed to fetch messages
+ */
 router.get('/', async (req, res) => {
-    const messages = await Message.find().sort({ timestamp: -1 });
-    res.json(messages);
+    try {
+        const db = await database.getDb();
+        const messages = await db.collection('messages')
+            .find({})
+            .sort({ timestamp: -1 })
+            .toArray();
+        res.json(messages);
+    } catch (err) {
+        console.error('Failed to fetch messages:', err);
+        res.status(500).json({ error: 'Failed to fetch messages' });
+    }
 });
 
-// POST - Dodaj wiadomość
-router.post('/', async (req, res) => {
-    const { userId, content } = req.body;
+/**
+ * @swagger
+ * /api/v1/messages:
+ *   post:
+ *     summary: Create a new message
+ *     requestBody:
+ *       required: true
+ *     responses:
+ *       201:
+ *         description: Message created
+ *       500:
+ *         description: Failed to create message
+ */
+router.post('/', verifyToken, async (req, res) => {
+    try {
+        const { userId, content } = req.body;
+        const db = await database.getDb();
 
-    const message = new Message({ userId, content });
-    await message.save();
+        const message = {
+            userId,
+            content,
+            timestamp: new Date()
+        };
 
-    res.status(201).json(message);
+        const result = await db.collection('messages').insertOne(message);
+        res.status(201).json({ _id: result.insertedId, ...message });
+    } catch (err) {
+        console.error('Failed to create message:', err);
+        res.status(500).json({ error: 'Failed to create message' });
+    }
 });
 
-// PUT - Aktualizuj wiadomość
-router.put('/:id', async (req, res) => {
-    const { content } = req.body;
-    const message = await Message.findById(req.params.id);
+/**
+ * @swagger
+ * /api/v1/messages/{id}:
+ *   put:
+ *     summary: Update a message
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *     requestBody:
+ *       required: true
+ *     responses:
+ *       200:
+ *         description: Message updated
+ *       404:
+ *         description: Message not found
+ *       500:
+ *         description: Failed to update message
+ */
+router.put('/:id', verifyToken, async (req, res) => {
+    try {
+        const { content } = req.body;
+        const db = await database.getDb();
 
-    if (!message) return res.status(404).json({ error: 'Message not found' });
+        const result = await db.collection('messages').findOneAndUpdate(
+            { _id: new ObjectId(req.params.id) },
+            { $set: { content } },
+            { returnDocument: 'after' }
+        );
 
-    message.content = content;
-    await message.save();
+        if (!result.value) return res.status(404).json({ error: 'Message not found' });
 
-    res.json(message);
+        res.json(result.value);
+    } catch (err) {
+        console.error('Failed to update message:', err);
+        res.status(500).json({ error: 'Failed to update message' });
+    }
 });
 
-// DELETE - Usuń wiadomość
-router.delete('/:id', async (req, res) => {
-    const message = await Message.findByIdAndDelete(req.params.id);
+/**
+ * @swagger
+ * /api/v1/messages/{id}:
+ *   delete:
+ *     summary: Delete a message
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *     responses:
+ *       204:
+ *         description: Message deleted
+ *       404:
+ *         description: Message not found
+ *       500:
+ *         description: Failed to delete message
+ */
+router.delete('/:id', verifyToken, async (req, res) => {
+    try {
+        const db = await database.getDb();
 
-    if (!message) return res.status(404).json({ error: 'Message not found' });
+        const result = await db.collection('messages').deleteOne({ _id: new ObjectId(req.params.id) });
 
-    res.status(204).send();
+        if (result.deletedCount === 0) return res.status(404).json({ error: 'Message not found' });
+
+        res.status(204).send();
+    } catch (err) {
+        console.error('Failed to delete message:', err);
+        res.status(500).json({ error: 'Failed to delete message' });
+    }
 });
 
 module.exports = router;
