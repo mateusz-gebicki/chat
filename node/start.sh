@@ -1,5 +1,7 @@
 #!/bin/bash
 
+npm install
+
 cp .env.example .env
 
 if [ -f /laravel/.env ]; then

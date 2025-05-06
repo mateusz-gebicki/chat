@@ -1,15 +1,13 @@
 #!/bin/bash
 
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R 775 storage bootstrap/cache
-
 composer install --no-interaction --prefer-dist --optimize-autoloader
 
 cp .env.example .env
 
-if ! grep -q "JWT_SECRET=" .env; then
-    php artisan jwt:secret
-fi
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+
+php artisan jwt:secret
 
 if [ ! -f database/database.sqlite ]; then
     touch database/database.sqlite
